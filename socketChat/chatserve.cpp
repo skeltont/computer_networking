@@ -18,7 +18,7 @@
 int main() {
 
     int status, socketfd, new_sd, len, yes = 1;
-
+    char chatPort[10];
     char incomming_data_buffer[1000];
 
     ssize_t bytes_received, bytes_sent;
@@ -28,18 +28,20 @@ int main() {
     struct sockaddr_storage their_addr;
     char *msg = "thank you.";
 
-
     // initialize our structure.
     memset(&host_info, 0, sizeof host_info);
 
-    std::cout << "Setting up the structs..."  << std::endl;
+    std::cout << "Setting up the structs..." << std::endl;
 
     host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
     host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
     host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
 
+    std::cout << "Please enter a port to open for chat: ";
+    std::cin >> chatPort;
+
     // Now fill up the linked list of host_info structs with google's address information.
-    status = getaddrinfo(NULL, "5556", &host_info, &host_info_list);
+    status = getaddrinfo(NULL, chatPort, &host_info, &host_info_list);
     if (status != 0) std::cout << "getaddrinfo error" << gai_strerror(status) ;
 
     std::cout << "Creating a socket..."  << std::endl;

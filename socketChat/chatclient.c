@@ -16,7 +16,7 @@
 int main(int argc , char *argv[]) {
   int i, sock, o, gfd, pfd, flags, mode, num_read;
   struct sockaddr_in server;
-  char message[1000], server_reply[5000], buf[5000];
+  char username[11], message[1000], server_reply[5000], buf[5000];
 
   // command line argument variables
 	char* p_value = NULL;
@@ -65,8 +65,11 @@ int main(int argc , char *argv[]) {
 
   printf("Connected\n");
 
+  printf("Enter username (up to 10 characters): ");
+  gets(username);
+
   for(;;) {
-    printf(PROMPT);
+    printf("%s%s",username,PROMPT);
     gets(message);
 
 		if(strlen(message) < 1) {
