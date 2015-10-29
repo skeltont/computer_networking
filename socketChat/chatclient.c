@@ -16,7 +16,7 @@
 int main(int argc , char *argv[]) {
   int i, sock, o, gfd, pfd, flags, mode, num_read;
   struct sockaddr_in server;
-  char username[11], message[1000], server_reply[5000], buf[5000];
+  char username[11], message[1000], server_reply[5000], payload[5000];
 
   // command line argument variables
 	char* p_value = NULL;
@@ -70,6 +70,8 @@ int main(int argc , char *argv[]) {
 
   for(;;) {
     printf("%s%s",username,PROMPT);
+
+    // TODO: needs to send the username with the prompt
     gets(message);
 
 		if(strlen(message) < 1) {
