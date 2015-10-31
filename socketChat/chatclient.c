@@ -16,7 +16,7 @@
 int main(int argc , char *argv[]) {
   int i, sock, o, gfd, pfd, flags, mode, num_read;
   struct sockaddr_in server;
-  char username[11], message[1000], server_reply[5000], payload[5000];
+  char username[10], message[1000], server_reply[1000], payload[5000];
 
   // command line argument variables
 	char* p_value = NULL;
@@ -68,11 +68,14 @@ int main(int argc , char *argv[]) {
   printf("Enter username (up to 10 characters): ");
   gets(username);
 
+
+
+
   for(;;) {
     printf("%s%s",username,PROMPT);
 
-    // TODO: needs to send the username with the prompt
     gets(message);
+    sprintf(payload,"%s%s%s\n", username, PROMPT, message);
 
 		if(strlen(message) < 1) {
 			printf("You need to enter in a command, plz. \n");
@@ -83,7 +86,7 @@ int main(int argc , char *argv[]) {
       printf("Exiting Chat \n");
     }
 
-    if(send(sock, message, strlen(message), 0) < 0) {
+    if(send(sock, payload, strlen(payload), 0) < 0) {
       puts("Sending message failed");
       return 1;
     }
@@ -91,9 +94,9 @@ int main(int argc , char *argv[]) {
     if(recv(sock, server_reply, 5000 ,0) < 0) {
         puts("recv failed");
         break;
+    } else {
+        printf("%s", server_reply);
     }
-
-    printf("%s", server_reply);
   }
 
   close(sock);

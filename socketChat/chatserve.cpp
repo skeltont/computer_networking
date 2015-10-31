@@ -18,15 +18,15 @@
 int main() {
 
     int status, socketfd, new_sd, len, yes = 1;
-    char chatPort[10];
-    char incomming_data_buffer[1000];
+    char chatPort[10], username[10];
+    char incomming_data_buffer[1000], message[1000], payload[1000];
 
     ssize_t bytes_received, bytes_sent;
 
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
     struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
     struct sockaddr_storage their_addr;
-    char *msg = "thank you.";
+    // char *msg = "thank you.";
 
     // initialize our structure.
     memset(&host_info, 0, sizeof host_info);
@@ -39,6 +39,9 @@ int main() {
 
     std::cout << "Please enter a port to open for chat: ";
     std::cin >> chatPort;
+
+    std::cout << "Please enter a username to use for chat: ";
+    std::cin >> username;
 
     // Now fill up the linked list of host_info structs with google's address information.
     status = getaddrinfo(NULL, chatPort, &host_info, &host_info_list);
@@ -61,28 +64,36 @@ int main() {
     if (status == -1)  std::cout << "listen error" << std::endl ;
 
     socklen_t addr_size = sizeof(their_addr);
-    new_sd = accept(socketfd, (struct sockaddr *)&their_addr, &addr_size);
+    new_sd = accept(socketfd, (struct sockaddr *) &their_addr, &addr_size);
     if (new_sd == -1) {
         std::cout << "listen error" << std::endl ;
     } else {
         std::cout << "Connection accepted. Using new socketfd : "  <<  new_sd << std::endl;
     }
 
-    std::cout << "Waiting to recieve data..."  << std::endl;
 
-    while (1) {
-      bytes_received = recv(new_sd, incomming_data_buffer,1000, 0);
+
+
+
+    for(;;) {
+      std::cout << username << PROMPT;
+      std::cin >> message;
+
+      sprintf(payload, "%s%s%s\n", username, PROMPT, message);
+
+      recv(new_sd, incomming_data_buffer, 1000, 0);
+
       // If no data arrives, the program will just wait here until some data arrives.
-      if (bytes_received == 0) std::cout << "host shut down." << std::endl ;
-      if (bytes_received == -1) std::cout << "recieve error!" << std::endl ;
-      std::cout << bytes_received << " bytes recieved :" << std::endl ;
+      // if (bytes_received == 0) std::cout << "host shut down." << std::endl ;
+      // if (bytes_received == -1) std::cout << "recieve error!" << std::endl ;
+
+      // std::cout << bytes_received << " bytes recieved :" << std::endl ;
       incomming_data_buffer[bytes_received] = '\0';
-      std::cout << incomming_data_buffer << std::endl;
+      std::cout << incomming_data_buffer;
 
-
-      std::cout << "send()ing back a message..."  << std::endl;
-      len = strlen(msg);
-      bytes_sent = send(new_sd, msg, len, 0);
+      // std::cout << "send()ing back a message..."  << std::endl;
+      len = strlen(payload);
+      bytes_sent = send(new_sd, payload, len, 0);
     }
 
 
