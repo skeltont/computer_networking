@@ -1,4 +1,8 @@
 # Project 1
+Creating a two way chat system using TCP. 
+
+*This project was developed locally and has been tested on the flip.engr.oregonsate.edu server.*
+
 ## Compiling
 - create the binaries 
 ```
