@@ -15,17 +15,11 @@
 #include "header_server.h"
 
 static void *receive_message(void * new_sd) {
-  char incomming_data_buffer[1000];
+  char client_response[1000];
   for(;;) {
-    recv((intptr_t) new_sd, incomming_data_buffer, 1000, 0);
-
-    // If no data arrives, the program will just wait here until some data arrives.
-    // if (bytes_received == 0) std::cout << "host shut down." << std::endl ;
-    // if (bytes_received == -1) std::cout << "recieve error!" << std::endl ;
-
-    // std::cout << bytes_received << " bytes recieved :";
-    // incomming_data_buffer[bytes_received] = '\0';
-    std::cout << incomming_data_buffer;
+    recv((intptr_t) new_sd, client_response, 1000, 0);
+    std::cout << client_response;
+    (void) memset(client_response, 0, sizeof(client_response));
   }
 }
 
@@ -42,7 +36,6 @@ int main() {
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
     struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
     struct sockaddr_storage their_addr;
-    // char *msg = "thank you.";
 
     // initialize our structure.
     memset(&host_info, 0, sizeof host_info);
@@ -94,15 +87,14 @@ int main() {
 
     for(;;) {
       std::cout << username << PROMPT;
-      std::cin >> message;
+      std::cin.getline(message,sizeof(message));
+      if(strlen(message) < 1) {
+  			continue;
+  		}
 
-      sprintf(payload, "%s%s%s\n", username, PROMPT, message);
-
-
-
-      // std::cout << "send()ing back a message..."  << std::endl;
-      len = strlen(payload);
-      bytes_sent = send(new_sd, payload, len, 0);
+      sprintf(payload, "\r%s%s%s\n", username, PROMPT, message);
+      send(new_sd, payload, strlen(payload), 0);
+      (void) memset(message, 0, sizeof(message));
     }
 
 

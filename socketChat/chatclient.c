@@ -16,20 +16,18 @@
 void *receive_message(sock) {
   char server_reply[1000];
   for(;;) {
-    if(recv(sock, server_reply, 5000 ,0) < 0) {
-        puts("recv failed");
-    } else {
-        printf("\n%s", server_reply);
-    }
+    recv(sock, server_reply, 1000 ,0);
+    printf("%s", server_reply);
+    (void) memset(server_reply, 0, sizeof(server_reply));
   }
 }
 
 int main(int argc , char *argv[]) {
   int i, o, gfd, pfd, flags, mode, num_read, rm;
-  intptr_t sock;
-  struct sockaddr_in server;
-  pthread_t thread;
   char username[10], message[1000], payload[5000];
+  struct sockaddr_in server;
+  intptr_t sock;
+  pthread_t thread;
 
   // command line argument variables
 	char* p_value = NULL;
@@ -88,10 +86,9 @@ int main(int argc , char *argv[]) {
     printf("%s%s",username,PROMPT);
 
     gets(message);
-    sprintf(payload,"%s%s%s\n", username, PROMPT, message);
+    sprintf(payload,"\r%s%s%s\n", username, PROMPT, message);
 
 		if(strlen(message) < 1) {
-			printf("You need to enter in a command, plz. \n");
 			continue;
 		}
 
@@ -103,6 +100,8 @@ int main(int argc , char *argv[]) {
       puts("Sending message failed");
       return 1;
     }
+
+		(void) memset(message, 0, sizeof(message));
   }
 
   close(sock);
