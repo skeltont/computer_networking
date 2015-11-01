@@ -8,16 +8,17 @@
 
 CC = gcc
 CPP = g++
+O = -pthread
 
 all: chatclient.c chatserve.cpp
-	$(CC)  chatclient.c -o chatclient
-	$(CPP) chatserve.cpp -o chatserve
+	$(CC)  chatclient.c $(O) -o chatclient
+	$(CPP) chatserve.cpp $(O) -o chatserve
 
 chatclient:
-	$(CC)  chatclient.c -o chatclient
+	$(CC)  chatclient.c $(O) -o chatclient
 
 chatserve:
-	$(CPP) chatserve.cpp -o chatserve
+	$(CPP) chatserve.cpp $(O) -o chatserve
 
 clean:
 	rm -rf chatclient
