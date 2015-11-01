@@ -14,14 +14,30 @@
 
 #include "header_server.h"
 
+static void *receive_message(void * new_sd) {
+  char incomming_data_buffer[1000];
+  for(;;) {
+    recv((intptr_t) new_sd, incomming_data_buffer, 1000, 0);
+
+    // If no data arrives, the program will just wait here until some data arrives.
+    // if (bytes_received == 0) std::cout << "host shut down." << std::endl ;
+    // if (bytes_received == -1) std::cout << "recieve error!" << std::endl ;
+
+    // std::cout << bytes_received << " bytes recieved :";
+    // incomming_data_buffer[bytes_received] = '\0';
+    std::cout << incomming_data_buffer;
+  }
+}
 
 int main() {
 
-    int status, socketfd, new_sd, len, yes = 1;
+    int status, socketfd, len, yes = 1;
     char chatPort[10], username[10];
-    char incomming_data_buffer[1000], message[1000], payload[1000];
+    char message[1000], payload[1000];
 
     ssize_t bytes_received, bytes_sent;
+    pthread_t thread;
+    intptr_t new_sd;
 
     struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
     struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
@@ -72,7 +88,8 @@ int main() {
     }
 
 
-
+    pthread_create(&thread, NULL, &receive_message, (void *) new_sd);
+    pthread_detach(thread);
 
 
     for(;;) {
@@ -81,15 +98,7 @@ int main() {
 
       sprintf(payload, "%s%s%s\n", username, PROMPT, message);
 
-      recv(new_sd, incomming_data_buffer, 1000, 0);
 
-      // If no data arrives, the program will just wait here until some data arrives.
-      // if (bytes_received == 0) std::cout << "host shut down." << std::endl ;
-      // if (bytes_received == -1) std::cout << "recieve error!" << std::endl ;
-
-      // std::cout << bytes_received << " bytes recieved :" << std::endl ;
-      incomming_data_buffer[bytes_received] = '\0';
-      std::cout << incomming_data_buffer;
 
       // std::cout << "send()ing back a message..."  << std::endl;
       len = strlen(payload);

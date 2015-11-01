@@ -13,10 +13,23 @@
 */
 #include "header_client.h"
 
+void *receive_message(sock) {
+  char server_reply[1000];
+  for(;;) {
+    if(recv(sock, server_reply, 5000 ,0) < 0) {
+        puts("recv failed");
+    } else {
+        printf("\n%s", server_reply);
+    }
+  }
+}
+
 int main(int argc , char *argv[]) {
-  int i, sock, o, gfd, pfd, flags, mode, num_read;
+  int i, o, gfd, pfd, flags, mode, num_read, rm;
+  intptr_t sock;
   struct sockaddr_in server;
-  char username[10], message[1000], server_reply[1000], payload[5000];
+  pthread_t thread;
+  char username[10], message[1000], payload[5000];
 
   // command line argument variables
 	char* p_value = NULL;
@@ -68,8 +81,8 @@ int main(int argc , char *argv[]) {
   printf("Enter username (up to 10 characters): ");
   gets(username);
 
-
-
+  pthread_create(&thread, NULL, receive_message, (void *) sock);
+  pthread_detach(thread);
 
   for(;;) {
     printf("%s%s",username,PROMPT);
@@ -89,13 +102,6 @@ int main(int argc , char *argv[]) {
     if(send(sock, payload, strlen(payload), 0) < 0) {
       puts("Sending message failed");
       return 1;
-    }
-
-    if(recv(sock, server_reply, 5000 ,0) < 0) {
-        puts("recv failed");
-        break;
-    } else {
-        printf("%s", server_reply);
     }
   }
 
