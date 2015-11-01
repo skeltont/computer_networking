@@ -14,95 +14,110 @@
 
 #include "header_server.h"
 
-static void *receive_message(void * new_sd) {
+using namespace std;
+
+// global, but i think it's reasonable to have this be global.
+// The username is very important.
+char username[10];
+
+static void *receive_message(void * sock) {
   char client_response[1000];
+
   for(;;) {
-    recv((intptr_t) new_sd, client_response, 1000, 0);
-    std::cout << client_response;
+    recv((intptr_t) sock, client_response, 1000, 0);
+    if(strlen(client_response) > 0) {
+      printf("%s", client_response);
+    }
     (void) memset(client_response, 0, sizeof(client_response));
   }
 }
 
-int main() {
+static void setup_connection(intptr_t *sock, int *socketfd){
+  int yes = 1;
+  char chatPort[10];
 
-    int status, socketfd, len, yes = 1;
-    char chatPort[10], username[10];
+  struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
+  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
+  struct sockaddr_storage their_addr;
+
+  // initialize our structure.
+  memset(&host_info, 0, sizeof host_info);
+  host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
+  host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
+  host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
+
+  printf("Please enter a port to open for chat: ");
+  cin >> chatPort;
+
+  // Now fill up the host_info struct with our address information.
+  if(getaddrinfo(NULL, chatPort, &host_info, &host_info_list) != 0)
+    printf("getaddrinfo error");
+
+  // create the socket
+  *socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype, host_info_list->ai_protocol);
+  if (*socketfd == -1)  printf("error creating socket\n");
+
+  // bind the socket
+  setsockopt(*socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
+  if(bind(*socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen) == -1)
+    printf("bind error\n");
+
+  printf("waiting for incoming client connection\n");
+
+  // wait for an attempted connection
+  if(listen(*socketfd, 5) == -1) printf("error attempting to listen\n");
+
+  socklen_t addr_size;
+  addr_size = sizeof(their_addr);
+  if ((*sock = accept(*socketfd, (struct sockaddr *) &their_addr, &addr_size)) == -1) {
+      printf("error accepting connection\n");
+      exit(1);
+  }
+
+  printf("connection accepted\n");
+}
+
+int main() {
+    int socketfd;
     char message[1000], payload[1000];
 
     ssize_t bytes_received, bytes_sent;
     pthread_t thread;
-    intptr_t new_sd;
+    intptr_t sock;
 
-    struct addrinfo host_info;       // The struct that getaddrinfo() fills up with data.
-    struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
-    struct sockaddr_storage their_addr;
+    printf("Please enter a username to use for chat: ");
+    cin >> username;
 
-    // initialize our structure.
-    memset(&host_info, 0, sizeof host_info);
+    setup_connection(&sock, &socketfd);
 
-    std::cout << "Setting up the structs..." << std::endl;
-
-    host_info.ai_family = AF_UNSPEC;     // IP version not specified. Can be both.
-    host_info.ai_socktype = SOCK_STREAM; // Use SOCK_STREAM for TCP or SOCK_DGRAM for UDP.
-    host_info.ai_flags = AI_PASSIVE;     // IP Wildcard
-
-    std::cout << "Please enter a port to open for chat: ";
-    std::cin >> chatPort;
-
-    std::cout << "Please enter a username to use for chat: ";
-    std::cin >> username;
-
-    // Now fill up the linked list of host_info structs with google's address information.
-    status = getaddrinfo(NULL, chatPort, &host_info, &host_info_list);
-    if (status != 0) std::cout << "getaddrinfo error" << gai_strerror(status) ;
-
-    std::cout << "Creating a socket..."  << std::endl;
-
-    socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype, host_info_list->ai_protocol);
-    if (socketfd == -1)  std::cout << "socket error " ;
-
-    std::cout << "Binding socket..."  << std::endl;
-
-    status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
-    status = bind(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
-    if (status == -1)  std::cout << "bind error" << std::endl ;
-
-    std::cout << "Listen()ing for connections..."  << std::endl;
-
-    status =  listen(socketfd, 5);
-    if (status == -1)  std::cout << "listen error" << std::endl ;
-
-    socklen_t addr_size = sizeof(their_addr);
-    new_sd = accept(socketfd, (struct sockaddr *) &their_addr, &addr_size);
-    if (new_sd == -1) {
-        std::cout << "listen error" << std::endl ;
-    } else {
-        std::cout << "Connection accepted. Using new socketfd : "  <<  new_sd << std::endl;
-    }
-
-
-    pthread_create(&thread, NULL, &receive_message, (void *) new_sd);
+    // spin off a thread that is always listening for messages so we can have them
+    // print out as they roll in.
+    pthread_create(&thread, NULL, &receive_message, (void *) sock);
     pthread_detach(thread);
 
-
     for(;;) {
-      std::cout << username << PROMPT;
-      std::cin.getline(message,sizeof(message));
+      printf("%s%s", username, PROMPT);
+      cin.getline(message,sizeof(message));
+
+      // we don't want to send an empty message
       if(strlen(message) < 1) {
   			continue;
   		}
 
+      if(strcmp(message, QUIT) == 0) {
+        printf("Exiting Chat \n");
+        break;
+      }
+
+      // format our message with the username and prompt so it looks like a
+      // chat message
       sprintf(payload, "\r%s%s%s\n", username, PROMPT, message);
-      send(new_sd, payload, strlen(payload), 0);
+      send(sock, payload, strlen(payload), 0);
       (void) memset(message, 0, sizeof(message));
     }
 
-
-    std::cout << "Stopping server..." << std::endl;
-
     // perform house keeping
-    freeaddrinfo(host_info_list);
-    close(new_sd);
+    close(sock);
     close(socketfd);
 
     return 0;

@@ -5,3 +5,4 @@
 #include <pthread.h>   	/* for threading , link with lpthread */
 
 # define PROMPT 		"> "
+# define QUIT   "/quit"

@@ -24,5 +24,5 @@
 #include <arpa/inet.h> 	/* inet_addr */
 #include <pthread.h>   	/* for threading , link with lpthread */
 
-# define PROMPT 		"> "
-# define CMD_EXIT   "exit"
+# define PROMPT	"> "
+# define QUIT   "/quit"

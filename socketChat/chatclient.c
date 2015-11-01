@@ -13,19 +13,47 @@
 */
 #include "header_client.h"
 
-void *receive_message(sock) {
+char username[10];
+
+static void *receive_message(sock) {
   char server_reply[1000];
+
   for(;;) {
     recv(sock, server_reply, 1000 ,0);
-    printf("%s", server_reply);
+    if(strlen(server_reply) > 0) {
+      printf("%s", server_reply);
+    }
     (void) memset(server_reply, 0, sizeof(server_reply));
   }
 }
 
+static void setup_connection(intptr_t *sock, char *i_value, char *p_value) {
+  struct sockaddr_in server;
+
+  // Attempt to create the socket
+  if((*sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    printf("Could not create socket");
+
+  printf("Socket created\n");
+
+  server.sin_addr.s_addr = inet_addr(i_value);
+  server.sin_family = AF_INET;
+  server.sin_port = htons(atoi(p_value));
+
+  //Connect to remote server
+  if (connect(*sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
+      perror("connect failed. Error");
+      exit(1);
+  }
+
+  printf("Connected\n");
+}
+
+
 int main(int argc , char *argv[]) {
   int i, o, gfd, pfd, flags, mode, num_read, rm;
-  char username[10], message[1000], payload[5000];
-  struct sockaddr_in server;
+  char message[1000], payload[5000];
+
   intptr_t sock;
   pthread_t thread;
 
@@ -57,43 +85,34 @@ int main(int argc , char *argv[]) {
 		exit(1);
 	}
 
-  // Attempt to create the socket
-  sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock == -1) {
-      printf("Could not create socket");
-  }
-  printf("Socket created\n");
-
-  server.sin_addr.s_addr = inet_addr(i_value);
-  server.sin_family = AF_INET;
-  server.sin_port = htons(atoi(p_value));
-
-  //Connect to remote server
-  if (connect(sock, (struct sockaddr *)&server, sizeof(server)) < 0) {
-      perror("connect failed. Error");
-      return 1;
-  }
-
-  printf("Connected\n");
-
-  printf("Enter username (up to 10 characters): ");
+  printf("Enter username: ");
   gets(username);
 
+  setup_connection(&sock, i_value, p_value);
+
+  // spin off a thread that is always listening for messages so we can have them
+  // print out as they roll in.
   pthread_create(&thread, NULL, receive_message, (void *) sock);
   pthread_detach(thread);
 
   for(;;) {
     printf("%s%s",username,PROMPT);
 
+    // user input
     gets(message);
+
+    // format our message with the username and prompt so it looks like a
+    // chat message
     sprintf(payload,"\r%s%s%s\n", username, PROMPT, message);
 
+    // we don't want to send an empty message
 		if(strlen(message) < 1) {
 			continue;
 		}
 
-    if(strcmp(message, CMD_EXIT) == 0) {
+    if(strcmp(message, QUIT) == 0) {
       printf("Exiting Chat \n");
+      break;
     }
 
     if(send(sock, payload, strlen(payload), 0) < 0) {
@@ -104,5 +123,6 @@ int main(int argc , char *argv[]) {
 		(void) memset(message, 0, sizeof(message));
   }
 
+  // close socket
   close(sock);
 }
