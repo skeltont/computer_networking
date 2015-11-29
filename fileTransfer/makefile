@@ -10,7 +10,7 @@ CC = gcc
 O = -pthread
 
 all: ftserver.c
-	$(CC) ftserver.c $(O) -o ftserver
+	$(CC) -Wall ftserver.c $(O) -o ftserver
 
 chatclient:
 

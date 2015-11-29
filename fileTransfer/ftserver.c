@@ -15,10 +15,7 @@
 #include "header_server.h"
 
 static void setup_control_connection(char *port, intptr_t *sd, int *c){
-  int yes = 1;
-  char chatPort[10];
   struct sockaddr_in server;
-  socklen_t addr_size;
 
   printf("> Opening connection on port #%s\n", port);
 
@@ -173,7 +170,7 @@ int main(int argc , char **argv) {
             // call LIST handler
             response = listDirectory();
             write(dsd, response, strlen(response));
-          } else if(strncmp(command, CMD_GET, strlen(CMD_GET)) == 0) {
+          } else if(strcmp(command, CMD_GET) == 0) {
             printf("> GET command received, sending response on data socket.\n");
             // call GET handler
             response = sendFile(filename, sizeof(filename));
