@@ -12,8 +12,6 @@ O = -pthread
 all: ftserver.c
 	$(CC) -Wall ftserver.c $(O) -o ftserver
 
-chatclient:
-
 ftserver:
 	$(CC) ftserver.c $(O) -o ftserver
 
