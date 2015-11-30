@@ -53,10 +53,10 @@ def setupData(c, args):
 
     if args.list_directory == True:
         print "> Sending LIST command"
-        c.send(str(args.data_port) + ";" + str("-l"))
+        c.send(str(args.data_port) + ";-l;")
     else:
         print "> Sending GET command"
-        c.send(str(args.data_port) + ";" + str("-g") + ";" + str(args.get_file))
+        c.send(str(args.data_port) + ";-g;" + str(args.get_file)+";")
 
 
     return d

@@ -104,20 +104,9 @@ char *sendFile(char *filename, size_t size) {
   return response;
 }
 
-
-bool validateArgs(char *p_value){
-  // Make sure they specify a port #
-  if (p_value == NULL) {
-    printf("\n Usage: \n");
-    printf("\t my_socket_server -p <port #> \n\n");
-    return false;
-  }
-  return true;
-}
-
 int main(int argc , char **argv) {
     int o, c, data_socket_created = 0, command_not_set = 0, command_need_file = 0;
-    char *buffer, *p_value, *invalid_message = "File not found\n";
+    char *buffer, *p_value = NULL, *invalid_message = "File not found\n";
     char message[1000], port[10], command[100], filename[100];
     intptr_t sd, csd, dsd;
     struct sockaddr_in client;
@@ -137,7 +126,11 @@ int main(int argc , char **argv) {
       }
     }
 
-    if (!validateArgs(p_value)) exit(1);
+    if (p_value == NULL) {
+      printf("\n Usage: \n");
+      printf("\t my_socket_server -p <port #> \n\n");
+      exit(1);
+    }
 
     setup_control_connection(p_value, &sd, &c);
     printf("> Control connection accepted\n");
@@ -157,7 +150,9 @@ int main(int argc , char **argv) {
             } else if (command_not_set == 0) {
               strcpy(command, buffer);
               command_not_set = 1;
-              command_need_file = 1;
+              if(strcmp(command, CMD_GET) == 0) {
+                command_need_file = 1;
+              }
             } else if(command_need_file == 1) {
               strcpy(filename, buffer);
             }
